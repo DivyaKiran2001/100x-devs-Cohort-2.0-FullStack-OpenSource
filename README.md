@@ -43,7 +43,12 @@ Understanding Prisma
 
 ## Week 14
 
-NextJS
+## 14.1
+Introduction to NextJS
+## 14.2
+NextJS Backend Part-1
+## 14.3
+NextJS Backend Part-2
 
 ## For all the notes for all the weeks visit the below link
 
