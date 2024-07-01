@@ -1,0 +1,337 @@
+Week 10 
+
+Date : 01-07-2024
+
+** 10.1 Understanding Postgres **
+
+Difference between Sql and NoSQL
+
+Sql                           NoSQL
+
+Strict schemas                Schemaless
+
+Very hard to change involve   Faster to produce apps
+migrations 
+
+Connecting to Postgres
+
+Syntax : postgres://[username]:[password]@[host]/[database_name]
+
+
+Basic types of Queries:
+
+1. Insert
+2. Update
+3. Delete
+4. Get
+
+Interacting with PostgreSQL
+
+** Using pg (node - postgres)
+
+-->  pg, also known as node-postgres, is a collection of Node.js modules for interfacing with your PostgreSQL database. It is non-blocking and designed specifically for use with Node.js. Similar to how mongoose is used for MongoDB, pg allows for interaction with PostgreSQL databases within a Node.js application.
+
+--> How to Use pg in Your Application?
+
+To use pg in your Node.js application, you first need to install it via npm or yarn:
+
+**  npm install pg
+**  yarn add pg
+
+//For a TODO application
+
+//Creating a Users table in sql
+
+create table users (
+ id serial primary key,
+ email varchar(50) unique not mull,
+ password varchar(50) not mull
+);
+
+//Creating a todos table
+
+create table todos (
+ id serial primary key,
+ title text not null,
+ description text,
+ user_id int references users(id)   //Foreign key
+);
+
+** psql command line interface **
+
+>> psql -h trumpet.db.elephantsql.com -p port_number -U username -d Database_Name
+
+Click Enter Then it will ask for password
+
+>> Password for user username : 
+
+Enter password and click enter
+
+And it will get connected to the Postgres database and you can write commands to get information regarding the tables
+
+** Commands :
+
+1. \dt                           ---> Gives all the tables present in that database
+2. select * from table_name      ---> Selects the data from a particular table
+3. drop table table_name         ---> Deletes a particular table
+
+** Note : You can also create tables in psql command line interface rather than in postgresql nodejs code
+
+** npm run build --> To build the application
+
+
+------------------------------------------------ utils.ts -------------------------------------------
+
+import {Client} from 'pg';
+
+export async function getClient(){
+ const client = new Client("postgres://wzsxsnxg:LHZ9Cv4QoZ1zctxapkOq2ch672-o9UQe@trumpet.db.elephantsql.com/wzsxsnxg");
+ await client.connect();
+ return client
+}
+
+
+------------------------------------------------ create-table.ts -------------------------------------------
+
+import {getClient} from "./utils";
+
+
+async function createTable() {
+ const createUserTableQuery = `
+    CREATE TABLE users (
+        id SERIAL PRIMARY KEY,
+        email varchar(255) unique not null,
+        password varchar(255) not null
+    );
+ `;
+
+ const client = await getClient();
+ 
+ await client.query(createUserTableQuery);
+
+ const createTodosQuery = `
+     CREATE TABLE todos (
+          id SERIAL PRIMARY KEY,
+          title text not null,
+          description text,
+          user_id int references users(id),
+          done Boolean default false
+     );
+  `;
+
+  await client.query(createTodosQuery);
+  console.log("Table created successfully");
+}
+
+createTable();
+
+
+------------------------------------------------ insert-data.ts -------------------------------------------
+
+
+import {getClient} from "./utils";
+
+async function createEntries() {
+ const client = await getClient();
+
+ const insertUserText = 'INSERT INTO users (email,password) VALUES ($1,$2) RETURNING id';
+ const userValues = ['abc@gmail.com','pass1'];
+ 
+ /****  Here we use $1,$2 ....... to avoid Sql injection ****/
+
+ /** SQL INJECTION  ** : SQL injection is a code injection technique that exploits a vulnerability in an application's software by inserting malicious SQL statements into a query. /
+
+
+ let response = await client.query(insertUserText,userValues);
+ const insertTodoText = 'INSERT INTO todos (title,description,user_id,done) VALUES ($1,$2,$3,$4) RETURNING id';
+ const todoValues = ['Buy groceries','Milk,bread and eggs',response.rows[0].id,false];
+ await client.query(insertTodoText,todoValues');
+
+ console.log("Entries created");
+
+}
+
+
+createEntries();
+
+
+------------------------------------------------ get-data.ts -------------------------------------------
+
+import {getClient} from "./utils";
+
+async function getUsers(){
+ const client = await getClient();
+ 
+ const selectUsersText = 'select * from users';
+ const userRes = await client.query(selectUsersText);
+ 
+ console.log("Users are:");
+
+ for(let user of userRes.rows){
+  console.log(`ID: ${user.id}, Email: ${user.email}`);
+ }
+}
+
+async function getUserFromEmail(email:string){
+ const client = await getClient();
+ 
+ const selectUserText = 'select * from users where email = $1';
+
+ const userRes = await client.query(selectUserText,[email]);
+
+ console.log("Single User detail");
+  
+ for(let user of userRes.rows){
+  console.log(`ID: ${user.id},Email : ${user.email}`);
+ }
+}
+
+async function getTodosForUser(userId: number){
+ const client = await getClient();
+ 
+ const selectTodosText = 'select * from todos where user_id = $1';
+ const todoRes = await client.query(selectTodosText,[userId]);
+
+ 
+ console.log(`Todos for User ID ${userId}:`);
+ for(let todo of todoRes.rows){
+   console.log(`ID: ${todo.id},Title: ${todo.title},Descrption: ${todo.description},Done: ${todo.done}`);
+
+ }
+}
+
+getUsers();
+
+getUsersFromEmail("abc@gmail.com");
+
+const userIdToFetch = 1;
+getTodosForUser(userIdToFetch);
+
+
+------------------------------------------------ update-data.ts -------------------------------------------
+
+
+
+import {getClient} from "./utils";
+
+async function updateTodo(todoId:number){
+  const client = await getClient();
+  
+  const updateTodoText = 'update todos set done = $1 where todoId = $2';
+
+  await client.query(updateTodoText,[true,todoId]);
+  console.log(`Todo with ID ${todoId} updated to done!`);
+}
+
+const todoIdToUpdate = 1;
+updateTodo(todoIdToUpdate);
+
+
+------------------------------------------------ delete -data.ts -------------------------------------------
+
+import {getClient} from "./utils";
+
+async function deleteTodo(todoId:number){
+  const client = await getClient();
+  
+  const updateTodoText = 'delete from todos where id = $1';
+
+  await client.query(deleteTodoText,[todoId]);
+  console.log(`Todo with ID ${todoId} deleted!`);
+}
+
+const todoIdToUpdate = 1;
+updateTodo(todoIdToDelete);
+
+
+------------------------- ** JOINS in PostgreSQL ** ------------------------
+
+import {getClient} from "./utils";
+
+async function getUserAndTodosWithJoin(userId:number){
+ const client = await getClient();
+ 
+
+ /----------------- Left Join : Get all Todos for a given user
+                    This needs to ensure that every user comes atleast once ---------------------/
+ const joinQuery = `
+   select users.email,todos.title,todos.description,todos.done 
+   from users
+   left join todos on users.id = todos.user_id where users.id = $1;
+ `; 
+ 
+ const res = await client.query(joinQuery,[userId]);
+ const results = res.rows;
+ console.log("Users and Todos",results);
+ 
+}
+
+getUserAndTodosWithJoin(1);
+
+>> To run the code run the below commands :
+
+- yarn build
+- node path_to_run
+Ex: node dist/joins/advance-1.ts
+
+node dist/create-table.ts
+
+
+
+-------------------------------------- Types of Joins ----------------------------------
+
+1. FULL JOIN : Should be present in either tables
+2. INNER JOIN : Should be present in both the tables
+3. LEFT JOIN : Should have all entries from left table
+4. RIGHT JOIN : Should have all entries from right table
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
