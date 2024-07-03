@@ -1,0 +1,162 @@
+Week 10 
+
+Date : 02/03-07-2024
+
+** 10.2 ORM(Object Relational Mapping) and Prisma **
+
+ORM(Object Relational Mapping) : ORM is a programming technique used to convert data between incompatible systems using object-oriented programming languages.
+
+It creates a "virtual object database" that developers can interact with using their programming language instead of direct database queries.
+
+** Prisma :
+
+Prisma is a next-generation ORM tool for Node.js and Typescript applications.
+
+1.Prisma Client : Auto generated and type safety query builder for Node.js and Typescript.
+
+2.Prisma Migrate : Migration tool to easily evolve your database schema from prototyping to production.
+
+3.Prisma Studio : GUI to view and edit data in your database.
+
+
+Defining Models in Prisma :
+
+Step 1 : Define your data model in schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  name     String?
+  password String
+  posts    Post[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  published Boolean  @default(false)
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+}
+
+Step 2 : Generate Migrations
+
+After the data model is defined the next step is to generate migrations to create tables in the database using Prisma Migrate
+
+Run the following command to generate and apply migrations :
+
+npx prisma migrate dev --name init
+
+So without running any sql commands you have created datbles using Prisma
+
+You can check if the tables have created or not using psql Command Line Interface using the below command
+
+Command :
+
+psql -h localhost -p port_no -U username -d database_name
+
+click enter and enter password
+
+To check the tables present use the below command
+
+>>\dt
+
+Querying using Prisma Client :
+
+// create-user.ts  (** INSERTING DATA INTO USERS TABLE  **)
+
+import {PrismaClient} from '@prisma/client';
+
+const prisma = new PrismaClient()
+
+async function main() {
+ prisma.user.create({
+  data : {
+   email : "divya@gmail.com",
+   name : "Divya"
+  }
+ }
+ )
+}
+
+main()
+
+You can visualize whether the data is inserted or not using 
+Prisma Studio using the below command
+
+** Command : npx prisma studio
+
+
+// create-post.ts  (** INSERTING Posts INTO USERS TABLE  **)
+
+import {PrismaClient} from '@prisma/client';
+
+const prisma = new PrismaClient()
+
+async function main() {
+ prisma.post.create({
+  data : {
+   title : "New Post",
+   content : "firstpost",
+   published : true,
+   author : {
+    connect : {
+      id : 1
+    }
+   }
+  }
+ }
+ )
+}
+
+main()
+
+
+//get-user.ts (** GET ALL THE USER DETAILS **)
+
+
+import {PrismaClient} from '@prisma/client';
+
+const prisma = new PrismaClient()
+
+async function main() {
+ const users = await prisma.user.findMany({
+  where : {
+   email : "divya@gmail.com"
+  }
+ });
+ console.log(users);
+}
+
+main()
+
+//update-user.ts (** UPDATE USER DETAILS **)
+
+
+import {PrismaClient} from '@prisma/client';
+
+const prisma = new PrismaClient()
+
+async function main() {
+ const users = await prisma.user.update({
+  where : {
+   id : 1
+  },
+  data : {
+   name : "Divya Kiran"
+  }
+ });
+ console.log(users);
+}
+
+main()
