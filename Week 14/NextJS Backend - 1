@@ -1,0 +1,290 @@
+Week 14
+
+--------------------------- 14.2 NextJS Backend Part -1 -------------------
+
+** Data Fetching in NextJS **
+
+> page.tsx
+
+async function getUserDetails() {
+  const response = await axios.get("https://week-13-offline.kirattechnologies.workers.dev/api/v1/user/details")
+	return response.data;
+}
+
+--------------------------------------------------------------------
+
+import axios from "axios";
+
+async function getUserDetails() {
+  const response = await axios.get("https://week-13-offline.kirattechnologies.workers.dev/api/v1/user/details")
+	return response.data;
+}
+
+export default async function Home() {
+  const userData = await getUserDetails();
+
+  return (
+    <div>
+      {userData.email}
+      {userData.name}
+    </div>
+  );
+}
+
+--------------------------------------------------------------------------------
+
+** Introducing Api routes in Next.js **
+
+--> NextJS lets you write backend routes just like express does.
+
+> api
+ > user
+  > route.ts
+
+export async function GET() {
+  return Response.json({ username: "harkirat", email: "harkirat@gmail.com" })
+}
+
+--> Try replacing the api call in page.tsx to hit this URL
+
+async function getUserDetails() {
+  try {
+    const response = await axios.get("http://localhost:3000/api/user")
+	  return response.data;
+  }  catch(e) {
+    console.log(e);
+  }
+}
+
+--------------------------------------------------------------------------------
+
+** Frontend for Signing up **
+
+> components
+ > Signup.tsx
+
+import axios from "axios";
+import { ChangeEventHandler, useState } from "react";
+
+export function Signup() {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+
+    return <div className="h-screen flex justify-center flex-col">
+        <div className="flex justify-center">
+        <a href="#" className="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 ">
+                <div>
+                    <div className="px-10">
+                        <div className="text-3xl font-extrabold">
+                            Sign up
+                        </div>
+                    </div>
+                    <div className="pt-2">
+                        <LabelledInput onChange={(e) => {
+                            setUsername(e.target.value);
+                        }} label="Username" placeholder="harkirat@gmail.com" />
+                        <LabelledInput onChange={(e) => {
+                            setPassword(e.target.value)
+                        }} label="Password" type={"password"} placeholder="123456" />
+                        <button type="button" className="mt-8 w-full text-white bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">Sign in</button>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+}
+
+function LabelledInput({ label, placeholder, type, onChange }: LabelledInputType) {
+    return <div>
+        <label className="block mb-2 text-sm text-black font-semibold pt-4">{label}</label>
+        <input onChange={onChange} type={type || "text"} id="first_name" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder={placeholder} required />
+    </div>
+}
+
+interface LabelledInputType {
+    label: string;
+    placeholder: string;
+    type?: string;
+    onChange: ChangeEventHandler<HTMLInputElement>
+}
+
+
+
+> app
+ > signup
+  > page.tsx
+
+import { Signup } from "@/components/Signup"
+
+export default function() {
+    return <Signup />
+}
+
+--> Convert components/Signup.tsx to a client component
+
+1. write "use client" on the top of the Signup.tsx code
+
+2. Add a  onclick handler that sends a POST request to /user
+
+ <button onClick={async () => {
+    const response = await axios.post("http://localhost:3000/api/user", {
+        username,
+        password
+    });
+    
+}} type="button" className="mt-8 w-full text-white bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">Sign in</button>
+
+--------------------------------------------------------------------------------
+
+** Backend for Signing up **
+
+-- Add a POST route that takes the users email and password 
+
+
+> api
+ > user
+  > route.ts
+
+import {NextRequest,NextResponse} from  'next/server';
+
+export async function POST(req : NextRequest) {
+ const body = await req.json();
+ return NextResponse.json({username : body.username,password : body.password});
+}
+
+-- Adding Prisma to this Next.js project
+
+1. Create a simple user schema
+
+model User {
+ id Int @id @default(autoincrement())
+ username String @unique
+ password String
+}
+
+2. Replace .env with your own Postgres URL
+
+DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
+
+3. Migrate the database
+
+npx prisma migrate dev --name init_schema
+
+4. Generate the client
+
+npx prisma client
+
+-- Now modify the POST route and GET route using Prisma Client
+
+** POST route **
+
+> api
+ > user
+  > route.ts
+
+import { PrismaClient } from "@prisma/client";
+
+const client = new PrismaClient();
+export async function POST(req: NextRequest) {
+ const body = await req.json();
+ const user = await client.user.create ({
+  data : {
+   username : body.username,
+   password : body.password
+  }
+ });
+ 
+ return NextResponse.json({message : "Signed up"});
+ 
+}
+
+** GET route **
+
+
+import { PrismaClient } from "@prisma/client";
+
+const client = new PrismaClient();
+
+export async function GET() {
+ const user = await client.user.findFirst({});
+ return Response.json({name : user?.username , email : user?.email});
+}
+
+** Singleton Prisma Client **
+
+If this error occurs : 
+
+warn(prisma-client) There are already 10 instances of Prisma Client actively running.
+
+> db
+ > index.ts
+
+import {PrismaClient} from '@prisma/client';
+
+const prismaClientSingleton = () => {
+ return new PrismaClient()
+}
+
+declare gloabal {
+ var prisma : undefined | ReturnType<typeof prismaClientSingleton>
+}
+
+const prisma = globalThis.prisma ?? prismaClientSingleton()
+
+export default prisma
+
+if(process.env.NODE_ENV ! == 'production') globalThis.prisma = prisma
+
+
+** Server Actions **
+
+
+-->  What if you could do a simple function call (even on a client component  that would run on the server?) (similar to RPC )
+
+
+> actions
+ > user.ts
+
+"use server"
+
+import client from "@/db"
+
+export async function signup(username: string, password: string) {
+    // should add zod validation here
+    const user = await client.user.create({
+        data: {
+            username: username,
+            password: password
+        }
+    });
+
+    console.log(user.id);
+
+    return "Signed up!"
+}
+
+
+> Signup.tsx
+
+import { signup } from "@/actions/user";;
+
+...
+
+<button onClick={async () => {
+    const response = await signup(username, password);
+    localStorage.setItem("token", response);
+    router.push("/")
+}} type="button" className="mt-8 w-full text-white bg-gray-800 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2">Sign in</button>
+
+
+Benefits of Server actions :
+
+1. Single function can be used in both client and server components
+2. 
+
+
+
+
+
+
