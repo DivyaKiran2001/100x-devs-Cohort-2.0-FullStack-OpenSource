@@ -1,0 +1,224 @@
+
+---------------------------- Create ----------------------
+
+1. Create a Single record
+
+- using create() method
+
+const user = await prisma.user.create({
+ data : {
+  email : '',
+  name  : ''
+ }
+})
+
+2. Create Multiple Records
+
+- using createMany() method
+
+const createMany = await prisma.user.createMany({
+ data : [
+  { name : '' , email : ''},
+  { name : '' , email : ''}
+ ]
+})
+
+3. Create and Return Multiple Records
+
+- using createManyAndReturn() method used to create many records and return resulting objects.
+
+const users = await prisma.user.createManyAndReturn({
+ data : [
+  { name : '' , email : '' },
+  { name : '' , email : '' }
+ ]
+})
+
+---------------------------------------- Read ----------------------------------
+
+1. Get record by ID or Unique Identifier
+
+- using findUnique() method 
+
+(i) By unique identifier
+
+const user = await prisma.user.findUnique({
+ where : {
+  email : '',
+ },
+})
+
+(ii) By Using ID
+
+const user = await prisma.user.findUnique({
+ where : {
+  id : 99,
+ },
+})
+
+2. Get all records
+
+- using findMany() method
+
+const users = await prisma.user.findMany()
+
+3. Get the first record that matches a specific criteria
+
+- using findFirst() method
+
+const findUser = await prisma.user.findFirst({
+ where : {},
+ orderBy : {},
+})
+
+4. Get a filtered list of records
+
+const users = await prisma.user.findMany({
+ where : {},
+})
+
+5. Select a subset of fields
+
+- The findUnique() query uses select to return subset of field ( here email and name ) fields of a specific User record.
+
+const user = await prisma.user.findMany({
+ where : {
+  email : 'divya@gmail.com'
+ },
+ select : {
+  email : true,
+  name  : true
+ }
+})
+
+- using nested select statements
+
+const user = await prisma.user.findUnique({
+ where : {},
+ select : {
+  email : true,
+  posts : {
+   select : {
+    likes : true,
+   }
+  }
+ }
+})
+
+** NOTE : Select distinct
+
+Prisma Client allows you to filter duplicate rows from a Prisma Query response to a findMany query using distinct.
+
+** Include relations and select relation fields **
+
+- To return specific relation fields you can use 
+(i) Use a nested select
+(ii) Use a select within an include
+
+- To return all relation fields, use include only
+Ex : { include : {
+        posts : true
+     }}
+
+- The following query uses select within an include, and returns all user fields and each post's title field
+
+const users = await prisma.user.findMany({
+ include : {
+  posts : {
+   select : {
+    title : true,
+   }
+  }
+ }
+})
+
+
+---------------------------------- Update ----------------------------------
+
+1. Update a Single Record
+
+- using update() method
+
+this query updates a single user record by email
+
+const updateUser = await prisma.user.update({
+ where : {
+  email : 'divya@gmail.com',
+ },
+ data : {
+  name : 'Divya',
+ }
+})
+
+2. Update multiple Records
+
+- using updateMany() method and inside it using contains
+
+const updateUser = await prisma.user.update({
+ where : {
+  email : {
+   contains : '@gmail.com',
+  }
+ },
+ data : {
+  name : 'Divya',
+ }
+})
+
+3. Update or Create Records
+
+- using upsert() method it will update existing record or create if it does not exist
+
+const upsertUser = await prisma.user.upsert({
+ where : {
+  email : 'divya@gmail.com'
+ },
+ update : {
+  name : 'Divya Kiran',
+ },
+ create : {
+  email : 'divya@gmail.com',
+  name : 'Divya Kiran',
+ },
+})
+
+4. Update a number field
+
+const updatePosts = await prisma.post.updateMany({
+ data : {
+  views : {
+   increment : 1,
+  }
+ }
+})
+
+------------------------------------- Delete ---------------------------------
+
+1. Delete a single record
+
+- using delete() method
+
+const deleteUser = await prisma.user.delete({
+ where : {
+  email : 'divya@gmail.com'
+ },
+})
+
+
+2. Delete Multiple Records (Includes a where condition)
+
+- using deleteMany() method and inside it use contains
+
+const deleteUsers = await prisma.user.deleteMany({
+ where : {
+  email : {
+   contains : '@gmail.com',
+  }
+ }
+})
+
+s
+3. Delete all records
+
+const deleteUsers = await prisma.user.deleteMany({})
+
