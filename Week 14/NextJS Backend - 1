@@ -281,7 +281,7 @@ import { signup } from "@/actions/user";;
 Benefits of Server actions :
 
 1. Single function can be used in both client and server components
-2. 
+2. What if you could do a simple function call (even on a client component  that would run on the server?) (similar to RPC )
 
 
 
