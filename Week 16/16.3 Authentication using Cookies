@@ -1,1 +1,36 @@
+16-07-2024
+
+Week 16
+
+** 16.3 :  NextAuth **
+
+--> Authentication using Cookies
+
+Cookie : Cookies in web development are small piece of data sent from a website and stored on the users computer by the users web browser while the user is browsing.
+
+** They are designed to be a reliable mechanism for websites to remember things (very similar to local storage)
+
+Browser ------> Server ------> (Set Cookie)-----> Browser ----> (cookie) ----> Server
+
+** Properties of Cookies :
+
+1. HttpOnly : Cannot be accessed by client side scripts
+
+2. SameSite : Ensure cookies are not send on cross origin sites.
+
+- Strict : With this setting, the cookie is only sent in requests originating from the same site (same origin)
+- Lax : (Only GET Requests and on top level navigation e.g., clicking a link)
+- None  : (Allow it from Any Site leads to CSRF attacks)
+
+** CSRF Attacks and SameSite
+
+Cross Site Request Forgery (CSRF) attacks were a common issue before the introduction of the SameSite attribute.
+
+
+** Types of Cookies :
+
+1. Persistent : stay away if u close the window
+2. Session : Go away after the window closes
+3. Secure : Sent only over secure , encrypted connections (HTTPS)
+
 
