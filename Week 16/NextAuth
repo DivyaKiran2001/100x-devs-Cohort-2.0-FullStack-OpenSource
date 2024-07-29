@@ -1,0 +1,10 @@
+------------------------ 29-07-2024 -----------------
+
+* NextAuth is a library used to do authentication in NextJS
+* Popoular choices while doing auth include - 
+External provider - 
+1. https://auth0.com/
+2. https://clerk.com/
+3. Firebase auth
+
+
