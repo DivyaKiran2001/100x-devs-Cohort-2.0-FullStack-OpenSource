@@ -7,4 +7,10 @@ External provider -
 2. https://clerk.com/
 3. Firebase auth
 
+- We cannot use session inside a server component if we try to use it we will get error
+- So to use session in server components we have to import this
+import { getServerSession } from "next-auth"
+
+
+
 
