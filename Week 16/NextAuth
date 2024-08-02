@@ -7,10 +7,35 @@ External provider -
 2. https://clerk.com/
 3. Firebase auth
 
-- We cannot use session inside a server component if we try to use it we will get error
-- So to use session in server components we have to import this
-import { getServerSession } from "next-auth"
+** NextJs lets you add Authentication to your Nextjs application
 
+-> It supports various providers
+
+1. Login with email
+2. Login with Google
+3. Login with Facebook
+4. Login with GitHub etc
+
+** If you want to add a single route handler for different routes you can create a ** catch all route **
+
+Example :
+
+1. /api/auth/user
+2. /api/auth/random
+3. /api/auth/123
+4. /api/auth/....
+
+Steps to be followed:
+
+1. Create app/api/auth/[...nextauth]/route.ts.
+
+import { NextRequest, NextResponse } from "next/server"
+
+export function GET(req: NextRequest) {
+    return NextResponse.json({
+        message: "Handler"
+    })
+}
 
 
 
